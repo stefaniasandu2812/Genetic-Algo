@@ -1,5 +1,5 @@
 # Sandu Stefania-Cristina 334CA
-# Tema1 - APD
+# Knapsack algo implemented as a genetic algoritm using threads in C.
 
 Arhiva contine aceleasi surse ca in varianta secventiala,
 modificate, si in plus header-ul `my_thread.h` care are
