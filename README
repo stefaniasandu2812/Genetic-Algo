@@ -1,0 +1,82 @@
+# Sandu Stefania-Cristina 334CA
+# Tema1 - APD
+
+Arhiva contine aceleasi surse ca in varianta secventiala,
+modificate, si in plus header-ul `my_thread.h` care are
+rolul de a retine argumentele necesare functiei de
+thread intr-o structura cu acelasi nume.
+
+Deoarece algoritmul genetic contine in principiu 5 etape
+(generatia initiala, fitness function, selectia, mutatia,
+crossover),fiecare avand la baza un "for", am gandit
+paralelizarea programului prin paralelizarea etapelor,
+implicit a buclelor, pentru fiecare generatie.
+
+Flow-ul programului poate fi descris astfel:
+
+- se citesc datele de intrare ale programului si numarul
+thread-urilor (P), in main prin functia `read_input(...)`
+
+- in `run_genetic_algorithm(...)` se aloca memorie pentru
+resurse, printre care si pentru thread-uri si argumentele
+pentru functia de thread(array-ul de structuri de tip
+`my_thread`) si se initializeaza bariera folosita in
+sincronizarea thread-urilor pentru race condition-urile
+aparute
+
+- in functia `f(...)` se afla noua implementare, argumentul
+primit fiind structura corespunzatoare fiecarui thread
+
+- prima etapa, crearea generatiei initiale, este impartita
+thread-urilor, valorile start si end fiind calculate prin
+functiile din laboratorul 1, apoi plasez o bariera pentru
+a astepta generatia completa
+
+- calcularea fitnesului fiecarui individ din generatie
+se face tot cu ajutorul lui start si end, modificand
+semnatura functiei `compute_fitness_function(...)`,
+astfel incat calculele sa fie impartite intre thread-uri,
+deci for-ul care itereaza prin generatie; urmeaza apoi o
+bariera, deoarece trebuie sa am fitness-ul pentru fiecare
+individ din generatie pentru a o putea sorta
+
+- qsort-ul este realizat doar de un thread deoarece
+thread-urile au acces la aceeasi generatie curenta si
+urmatoare prin memorie partajata, dupa care pun o bariera
+pentru ca restul etapelor se bazeaza pe generatia curenta
+sortata
+
+- pentru selectia elitei, indivizii sunt copiati de
+thread-uri simultan; cele 2 mutati pot fi realizate si ele
+in paralel, iar crossover-ul la fel, fara a mai pune
+bariere, deoarece sunt copiate si modificate valorile in/din
+noua generatie de catre firele de executie conform
+intervalelor (diferite) start - end
+
+- urmeaza o bariera pentru generarea finala a noii
+generatii, apoi se schimba generatiile si se updateaza
+noii indecsi pentru generatia curenta
+
+- afisez cel mai bun fitnes o singura data
+
+- la sfarsitul functiei este paralelizat iar calculul
+fitness-ului, dar si eliberarea memoriei generatiilor,
+care era realizata prin functia `free_generation(...)` (for-urile din functie)
+
+- in functia de rulare a algoritmului, am dat join la
+thread-uri si am eliberat memoria folosita
+
+Pentru a obtine un timp mai bun, a trebuit sa paralelizez
+si sortarea, dar am ales sa pastrez qsort-ul si sa modific
+functia de comparare data ca parametru acesteia.Astfel, in
+`cmpfunc(...)` se observa un for care avea rolul de a
+calcula numarul cromozomilor cu valoarea 1, adica numarul
+de obiecte din rucsac pentru fiecare individ, care avea
+rol de stabilire a ordinii in cazul in care fitnessul a 2
+indivizi era egal.
+
+Am ales sa retin numarul de obiecte din rucsac pentru
+per individ adaugand un camp in `individual.h`, pe care il
+calculez in momentul stabilirii fitnessului in functia
+`compute_fitness_function(...)`, iar in `cmpfunc` doar
+fac diferenta dintre nr obiectelor celor 2 indivizi.
